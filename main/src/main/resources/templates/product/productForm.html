@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            var errorMessage = [[${ errorMessage }]];
+            if (errorMessage != null) {
+                alert(errorMessage);
+            }
+        });
+    </script>
+</th:block>
+
+<th:block layout:fragment="css">
+    <style>
+        .admin-wrap {
+            max-width: 900px;
+            margin: 0 auto 44px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .admin-card {
+            background: #fff;
+            border: 1px solid #dbe2ef;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 24px rgba(23, 32, 51, 0.08);
+        }
+
+        .admin-title {
+            font-weight: 700;
+            color: #172033;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+
+        .admin-desc {
+            color: #5f6b80;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: #172033;
+            font-size: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f4f7fd;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: #172033;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .field-label i {
+            margin-right: 6px;
+            color: #3b82f6;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1);
+        }
+
+        .img-row {
+            border: 1px solid #e6ecf7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #fbfcff;
+            transition: all 0.2s;
+        }
+
+        .img-row:hover {
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+
+        .submit-row {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #edf1f8;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn-lg {
+            padding: 12px 32px;
+            font-weight: 600;
+        }
+
+        .required-mark {
+            color: #ef4444;
+            margin-left: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-card {
+                padding: 20px;
+            }
+
+            .submit-row {
+                flex-direction: column;
+            }
+
+            .submit-row .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="admin-wrap">
+    <div class="page-header">
+        <h2 class="admin-title" th:text="${productFormDto.id == null} ? '상품 등록' : '상품 수정'">
+            <i class="bi bi-box-seam me-2"></i>상품 등록
+        </h2>
+    </div>
+
+    <div class="admin-card">
+        <p class="admin-desc">
+            <i class="bi bi-info-circle me-1"></i>
+            관리자 권한으로 상품 정보와 이미지를 관리합니다.
+        </p>
+
+        <form role="form" method="post" enctype="multipart/form-data" th:object="${productFormDto}"
+            th:action="${productFormDto.id == null} ? @{/admin/products/new} : @{/admin/products/{productId}(productId=${productFormDto.id})}">
+
+            <input type="hidden" th:field="*{id}">
+
+            <h3 class="section-title">기본 정보</h3>
+
+            <div class="mb-4">
+                <label class="field-label">
+                    <i class="bi bi-tag"></i>판매 상태<span class="required-mark">*</span>
+                </label>
+                <select th:field="*{productSellStatus}" class="form-select">
+                    <option value="SELL">판매중</option>
+                    <option value="SOLD_OUT">품절</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label th:for="name" class="field-label">
+                    <i class="bi bi-card-text"></i>상품명<span class="required-mark">*</span>
+                </label>
+                <input type="text" th:field="*{name}" class="form-control" placeholder="상품명을 입력해주세요">
+                <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-danger mt-1 mb-0"></p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label th:for="price" class="field-label">
+                        <i class="bi bi-currency-dollar"></i>가격<span class="required-mark">*</span>
+                    </label>
+                    <input type="number" th:field="*{price}" class="form-control" placeholder="0" min="0">
+                    <p th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="text-danger mt-1 mb-0"></p>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label th:for="stockQuantity" class="field-label">
+                        <i class="bi bi-box"></i>재고<span class="required-mark">*</span>
+                    </label>
+                    <input type="number" th:field="*{stockQuantity}" class="form-control" placeholder="0" min="0">
+                    <p th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}" class="text-danger mt-1 mb-0">
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label th:for="description" class="field-label">
+                    <i class="bi bi-text-paragraph"></i>상품 상세 설명<span class="required-mark">*</span>
+                </label>
+                <textarea class="form-control" th:field="*{description}" rows="6" placeholder="상품에 대한 자세한 설명을 입력해주세요"></textarea>
+                <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-danger mt-1 mb-0"></p>
+            </div>
+
+            <h3 class="section-title mt-5">
+                <i class="bi bi-image me-2"></i>상품 이미지
+            </h3>
+            <p class="text-muted mb-3" style="font-size: 14px;">
+                <i class="bi bi-lightbulb me-1"></i>첫 번째 이미지가 대표 이미지로 사용됩니다. (최대 5개)
+            </p>
+
+            <th:block th:if="${#lists.isEmpty(productFormDto.productImgDtoList)}">
+                <div th:each="num: ${#numbers.sequence(1,5)}" class="img-row">
+                    <div class="input-group">
+                        <label class="input-group-text" th:classappend="${num == 1} ? 'bg-primary text-white' : ''"
+                               th:text="${num == 1} ? '대표 이미지' : ('이미지 ' + ${num})">
+                        </label>
+                        <input type="file" class="form-control" name="itemImgFile" accept="image/*">
+                    </div>
+                </div>
+            </th:block>
+
+            <th:block th:unless="${#lists.isEmpty(productFormDto.productImgDtoList)}">
+                <div th:each="imgDto, stat : ${productFormDto.productImgDtoList}" class="img-row">
+                    <input type="hidden" name="productImgIds" th:value="${imgDto.id}">
+
+                    <div class="input-group mb-2">
+                        <label class="input-group-text" th:classappend="${stat.first} ? 'bg-primary text-white' : ''"
+                               th:text="${stat.first} ? '대표 이미지 (기존)' : ('이미지 ' + ${stat.count} + ' (기존)')">
+                        </label>
+                        <input type="text" class="form-control" th:value="${imgDto.oriImgName}" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-group-text">
+                            <i class="bi bi-upload me-1"></i>새 이미지
+                        </label>
+                        <input type="file" class="form-control" name="itemImgFile" accept="image/*">
+                    </div>
+                </div>
+            </th:block>
+
+            <div class="submit-row">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <span th:text="${productFormDto.id == null} ? '저장하기' : '수정하기'">저장하기</span>
+                </button>
+                <a th:href="@{/admin/products}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-x-circle me-2"></i>취소
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+</html>

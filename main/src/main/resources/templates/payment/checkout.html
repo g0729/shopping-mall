@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        var orderId = [[${order.orderId}]];
+        var totalPrice = [[${order.totalPrice}]];
+
+        function pay() {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $("#payBtn").prop("disabled", true).text("결제 처리 중...");
+
+            // 1단계: 결제 준비
+            $.ajax({
+                url: "/payments/ready",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ orderId: orderId }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader(header, token);
+                },
+                dataType: "json",
+                cache: false,
+                success: function (readyResult) {
+                    // 2단계: 결제 승인
+                    var merchantUid = "order_" + orderId + "_" + Date.now();
+                    var mockImpUid = "imp_mock_" + Date.now();
+
+                    $.ajax({
+                        url: "/payments/confirm",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            orderId: orderId,
+                            impUid: mockImpUid,
+                            merchantUid: merchantUid,
+                            amount: totalPrice
+                        }),
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader(header, token);
+                        },
+                        dataType: "json",
+                        cache: false,
+                        success: function (confirmResult) {
+                            location.href = '/payments/success?orderId=' + orderId;
+                        },
+                        error: function (jqXHR) {
+                            var msg = "결제 승인에 실패했습니다.";
+                            try {
+                                var res = JSON.parse(jqXHR.responseText);
+                                if (res.message) msg = res.message;
+                            } catch (e) {}
+                            location.href = '/payments/fail?orderId=' + orderId + '&message=' + encodeURIComponent(msg);
+                        }
+                    });
+                },
+                error: function (jqXHR) {
+                    var msg = "결제 준비에 실패했습니다.";
+                    try {
+                        var res = JSON.parse(jqXHR.responseText);
+                        if (res.message) msg = res.message;
+                    } catch (e) {}
+                    location.href = '/payments/fail?orderId=' + orderId + '&message=' + encodeURIComponent(msg);
+                }
+            });
+        }
+    </script>
+</th:block>
+
+<th:block layout:fragment="css">
+    <style>
+        .checkout-wrap {
+            max-width: 720px;
+            margin: 0 auto 44px;
+        }
+
+        .page-title {
+            font-weight: 700;
+            color: #172033;
+            margin-bottom: 24px;
+        }
+
+        .checkout-card {
+            background: #fff;
+            border: 1px solid #dbe2ef;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 8px 20px rgba(23, 32, 51, 0.07);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: #172033;
+            font-size: 18px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f4f7fd;
+        }
+
+        .section-title i {
+            margin-right: 8px;
+            color: #3b82f6;
+        }
+
+        .checkout-item {
+            display: grid;
+            grid-template-columns: 72px 1fr auto;
+            gap: 14px;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #edf1f8;
+        }
+
+        .checkout-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-item img {
+            width: 72px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e6ecf7;
+        }
+
+        .checkout-summary {
+            background: #f8fbff;
+            border: 1px solid #dbe2ef;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .summary-row.total {
+            border-top: 2px solid #172033;
+            margin-top: 12px;
+            padding-top: 16px;
+        }
+
+        .total-price {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #d23615;
+        }
+
+        .payment-info {
+            background: #fef3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .payment-info i {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        #payBtn {
+            flex: 1;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+        }
+
+        .btn-cancel {
+            padding: 16px 24px;
+            font-weight: 600;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 576px) {
+            .checkout-item {
+                grid-template-columns: 60px 1fr;
+            }
+
+            .checkout-item .text-end {
+                grid-column: 1 / -1;
+                text-align: left !important;
+                margin-top: 4px;
+            }
+
+            .button-group {
+                flex-direction: column-reverse;
+            }
+
+            .btn-cancel {
+                padding: 14px;
+            }
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="checkout-wrap">
+
+    <h2 class="page-title">
+        <i class="bi bi-credit-card me-2"></i>결제하기
+    </h2>
+
+    <div class="payment-info">
+        <i class="bi bi-info-circle-fill"></i>
+        <strong>테스트 결제 모드</strong>입니다. 실제 결제는 진행되지 않습니다.
+    </div>
+
+    <div class="checkout-card">
+        <h5 class="section-title">
+            <i class="bi bi-bag-check"></i>주문 상품
+        </h5>
+
+        <div th:each="item : ${order.orderItemDtoList}" class="checkout-item">
+            <img th:src="${item.imgUrl}" th:alt="${item.itemNm}">
+            <div>
+                <div class="fw-bold" th:text="${item.itemNm}"></div>
+                <div class="text-muted small">
+                    <i class="bi bi-box me-1"></i>
+                    <span th:text="${item.count} + '개'"></span>
+                    <span class="mx-1">·</span>
+                    <span th:text="${#numbers.formatInteger(item.orderPrice, 0, 'COMMA')} + '원'"></span>
+                </div>
+            </div>
+            <div class="text-end">
+                <span class="fw-bold" th:text="${#numbers.formatInteger(item.orderPrice * item.count, 0, 'COMMA')} + '원'"></span>
+            </div>
+        </div>
+
+        <div class="checkout-summary">
+            <div class="summary-row">
+                <span class="text-muted">
+                    <i class="bi bi-receipt me-1"></i>주문 번호
+                </span>
+                <span class="fw-bold" th:text="'#' + ${order.orderId}"></span>
+            </div>
+            <div class="summary-row">
+                <span class="text-muted">
+                    <i class="bi bi-box-seam me-1"></i>상품 수
+                </span>
+                <span th:text="${#lists.size(order.orderItemDtoList)} + '건'"></span>
+            </div>
+            <div class="summary-row">
+                <span class="text-muted">
+                    <i class="bi bi-truck me-1"></i>배송비
+                </span>
+                <span>무료</span>
+            </div>
+            <div class="summary-row total">
+                <span class="fw-bold">총 결제 금액</span>
+                <span class="total-price" th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + '원'"></span>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="button" id="payBtn" class="btn btn-primary" onclick="pay()">
+                <i class="bi bi-credit-card-2-front me-2"></i>
+                <span th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + '원 결제하기'"></span>
+            </button>
+            <a th:href="@{/orders}" class="btn btn-outline-secondary btn-cancel">
+                <i class="bi bi-x-circle me-1"></i>취소
+            </a>
+        </div>
+    </div>
+
+</div>
+
+</html>

@@ -1,0 +1,100 @@
+<html layout:decorate="~{layout}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<th:block layout:fragment="css">
+    <style>
+        .auth-wrap {
+            max-width: 520px;
+            margin: 24px auto;
+        }
+
+        .auth-card {
+            border: 1px solid #dbe2ef;
+            border-radius: 16px;
+            box-shadow: 0 12px 26px rgba(23, 32, 51, 0.09);
+            background: #fff;
+            padding: 22px;
+        }
+
+        .auth-title {
+            text-align: center;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .oauth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="auth-wrap">
+    <h4 class="auth-title">회원가입</h4>
+
+    <div class="auth-card">
+        <div class="text-center mb-3">
+            <h6 class="text-muted small mb-0">소셜 로그인 또는 이메일로 시작할 수 있어요.</h6>
+        </div>
+
+        <div class="d-grid gap-2 mb-4">
+            <a href="/oauth2/authorization/google" class="btn btn-outline-secondary oauth-btn"
+               aria-label="Google 계정으로 가입">
+                <img src="https://developers.google.com/identity/images/g-logo.png" width="20" class="me-1"
+                     alt="Google 로고" referrerpolicy="no-referrer">
+                Google로 시작하기
+            </a>
+            <a href="/oauth2/authorization/kakao" class="btn oauth-btn"
+               style="background-color: #FEE500; color: #3C1E1E;"
+               aria-label="Kakao 계정으로 가입">
+                Kakao로 시작하기
+            </a>
+        </div>
+
+        <div class="d-flex align-items-center mb-4">
+            <hr class="flex-grow-1">
+            <span class="mx-3 text-muted small">또는 이메일로 가입</span>
+            <hr class="flex-grow-1">
+        </div>
+
+        <form th:action="@{/users/register}" th:object="${userRegisterDto}" method="post">
+
+            <div th:replace="~{form_errors :: formErrorsFragment}"></div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">이메일</label>
+                <input type="email" th:field="*{email}" class="form-control"
+                       placeholder="example@email.com" required autocomplete="email">
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">비밀번호</label>
+                <input type="password" th:field="*{password}" class="form-control"
+                       required autocomplete="new-password" aria-describedby="passwordHelp">
+                <div id="passwordHelp" class="form-text">8자 이상 입력해주세요</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="passwordCheck" class="form-label">비밀번호 확인</label>
+                <input type="password" th:field="*{passwordCheck}" class="form-control"
+                       required autocomplete="new-password">
+            </div>
+
+            <div class="mb-3">
+                <label for="nickname" class="form-label">닉네임</label>
+                <input type="text" th:field="*{nickname}" class="form-control"
+                       placeholder="사이트에서 사용할 이름" required autocomplete="nickname">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-2">가입하기</button>
+        </form>
+    </div>
+
+    <div class="text-center mt-3">
+        <span class="text-muted">이미 계정이 있으신가요?</span>
+        <a th:href="@{/users/login}" class="text-decoration-none fw-bold">로그인</a>
+    </div>
+</div>
+
+</html>

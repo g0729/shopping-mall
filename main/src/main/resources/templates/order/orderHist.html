@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+
+        $(document).ready(function () {
+            $(document).on("click", ".cancel-order-btn", function () {
+                var orderId = $(this).data("id");
+                cancelOrder(orderId);
+            });
+        });
+
+        function cancelOrder(orderId) {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+            var url = "/orders/" + orderId + "/cancel";
+            var paramData = { orderId: orderId };
+            var param = JSON.stringify(paramData);
+
+            if (!confirm("정말 주문을 취소하시겠습니까?")) {
+                return;
+            }
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: param,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader(header, token);
+                },
+                dataType: "json",
+                cache: false,
+                success: function (result, status) {
+                    alert("주문이 취소되었습니다.");
+                    location.href = '/orders/' + [[${ page }]];
+                },
+                error: function (jqXHR, status, error) {
+                    if (jqXHR.status == '401') {
+                        alert('로그인 후 이용해주세요');
+                        location.href = '/users/login';
+                    } else {
+                        alert(jqXHR.responseText);
+                    }
+                }
+            });
+        }
+    </script>
+</th:block>
+<th:block layout:fragment="css">
+    <style>
+        .hist-wrap {
+            max-width: 980px;
+            margin: 0 auto 44px;
+        }
+
+        .order-block {
+            border: 1px solid #dbe2ef;
+            border-radius: 14px;
+            background: #fff;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(23, 32, 51, 0.07);
+        }
+
+        .order-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .order-item {
+            display: grid;
+            grid-template-columns: 88px 1fr;
+            gap: 12px;
+            align-items: center;
+            border-top: 1px solid #edf1f8;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        .order-item img {
+            width: 88px;
+            height: 88px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e6ecf7;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="hist-wrap">
+
+    <h2 class="mb-3 fw-bold">구매 이력</h2>
+
+    <div th:if="${#lists.isEmpty(orders.getContent())}" class="text-center py-5">
+        <p class="text-muted h5">구매 이력이 없습니다.</p>
+        <a th:href="@{/}" class="btn btn-primary mt-3">쇼핑하러 가기</a>
+    </div>
+
+    <div th:each="order : ${orders.getContent()}" class="order-block">
+
+        <div class="order-head">
+            <h5 class="mb-0" th:text="${order.orderDate} + ' 주문'"></h5>
+            <div>
+                <th:block th:if="${order.orderStatus == T(com.shopping.main.domain.order.constant.OrderStatus).ORDER}">
+                    <a th:if="${!order.paid}" th:href="@{'/payments/' + ${order.orderId}}"
+                        class="btn btn-primary btn-sm">결제하기</a>
+                    <span th:if="${order.paid}" class="badge bg-success">결제 완료</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm cancel-order-btn"
+                        th:data-id="${order.orderId}"
+                        th:aria-label="'주문 ' + ${order.orderId} + ' 취소'">주문취소</button>
+                </th:block>
+                <th:block
+                    th:unless="${order.orderStatus == T(com.shopping.main.domain.order.constant.OrderStatus).ORDER}">
+                    <span class="badge bg-secondary">취소 완료</span>
+                </th:block>
+            </div>
+        </div>
+
+        <div th:each="orderItem : ${order.orderItemDtoList}" class="order-item">
+            <img th:src="${orderItem.imgUrl}" th:alt="${orderItem.itemNm}">
+            <div>
+                <div class="fw-bold" th:text="${orderItem.itemNm}"></div>
+                <div class="text-muted">
+                    <span th:text="${orderItem.orderPrice} + '원'"></span>
+                    <span th:text="' · ' + ${orderItem.count} + '개'"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div
+        th:with="start=${(orders.number/maxPage)*maxPage + 1}, end=(${(orders.totalPages == 0) ? 1 : (start + (maxPage - 1) < orders.totalPages ? start + (maxPage - 1) : orders.totalPages)})">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${orders.number eq 0}?'disabled':''">
+                <a th:href="@{'/orders/' + ${orders.number-1}}" aria-label='Previous' class="page-link">
+                    <span aria-hidden='true'>Previous</span>
+                </a>
+            </li>
+
+            <li class="page-item" th:each="page: ${#numbers.sequence(start, end)}"
+                th:classappend="${orders.number eq page-1}?'active':''">
+                <a th:href="@{'/orders/' + ${page-1}}" th:inline="text" class="page-link">[[${page}]]</a>
+            </li>
+
+            <li class="page-item" th:classappend="${orders.number+1 ge orders.totalPages}?'disabled':''">
+                <a th:href="@{'/orders/' + ${orders.number+1}}" aria-label='Next' class="page-link">
+                    <span aria-hidden='true'>Next</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+</div>
+
+</html>

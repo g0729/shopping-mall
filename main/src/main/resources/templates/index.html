@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<th:block layout:fragment="css">
+    <style>
+        .hero {
+            background: linear-gradient(120deg, #003c95 0%, #0054d1 48%, #0f78ff 100%);
+            color: #fff;
+            border-radius: 18px;
+            padding: 44px 36px;
+            margin-bottom: 28px;
+            box-shadow: 0 16px 30px rgba(8, 36, 84, 0.22);
+        }
+
+        .hero h1 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            font-weight: 800;
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .product-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-card {
+            border: 1px solid #dbe2ef;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #fff;
+            height: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 24px rgba(23, 32, 51, 0.12);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-bottom: 1px solid #e7ecf5;
+        }
+
+        .product-body {
+            padding: 16px;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .product-detail {
+            color: #5f6b80;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            min-height: 48px;
+        }
+
+        .product-price {
+            color: #d23615;
+            font-weight: 800;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .product-col {
+            margin-bottom: 24px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+
+    <div class="hero">
+        <h1 class="display-5 mb-2">쇼핑의 기준을 바꾸는 상품들</h1>
+        <p class="lead">검증된 품질, 합리적인 가격, 빠른 주문까지 한 번에.</p>
+    </div>
+
+    <input type="hidden" name="searchQuery" th:value="${productSearchDto != null ? productSearchDto.searchQuery : ''}">
+    <div th:if="${not #strings.isEmpty(productSearchDto.searchQuery)}" class="text-center mb-3">
+        <p class="h4 fw-bold" th:text="'&quot;' + ${productSearchDto.searchQuery} + '&quot; 검색 결과'"></p>
+    </div>
+
+    <h3 class="section-title">상품 목록</h3>
+
+    <div th:if="${#lists.isEmpty(items.content)}" class="text-center py-5">
+        <p class="text-muted h5">검색 결과가 없습니다.</p>
+        <a th:href="@{/}" class="btn btn-outline-primary mt-3">전체 상품 보기</a>
+    </div>
+
+    <div class="row" th:unless="${#lists.isEmpty(items.content)}">
+        <th:block th:each="item, status: ${items}">
+            <div class="col-md-4 col-sm-6 product-col">
+                <article class="product-card">
+                    <a th:href="'/products/' +${item.id}" class="product-link">
+                        <img th:src="${item.imgUrl}" class="product-image"
+                             th:alt="${item.itemNm} + ' 상품 이미지'" loading="lazy">
+                        <div class="product-body">
+                            <h4 class="product-name">[[${item.itemNm}]]</h4>
+                            <p class="product-detail">[[${item.itemDetail}]]</p>
+                            <p class="product-price" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + '원'"></p>
+                        </div>
+                    </a>
+                </article>
+            </div>
+        </th:block>
+    </div>
+    <div
+        th:with="start=${(items.number/maxPage)*maxPage + 1}, end=(${(items.totalPages == 0) ? 1 : (start + (maxPage - 1) < items.totalPages ? start + (maxPage - 1) : items.totalPages)})">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item" th:classappend="${items.first}?'disabled'">
+                <a th:href="@{'/' + '?searchQuery=' + ${productSearchDto.searchQuery} + '&page=' + ${items.number - 1}}"
+                    aria-label='Previous' class="page-link">
+                    <span aria-hidden='true'>Previous</span>
+                </a>
+            </li>
+
+            <li class="page-item" th:each="page: ${#numbers.sequence(start, end)}"
+                th:classappend="${items.number eq page - 1}?'active':''">
+                <a th:href="@{'/' +'?searchQuery=' + ${productSearchDto.searchQuery} + '&page=' + ${page - 1}}"
+                    th:inline="text" class="page-link">[[${page}]]</a>
+            </li>
+
+            <li class="page-item" th:classappend="${items.last}?'disabled'">
+                <a th:href="@{'/' + '?searchQuery=' + ${productSearchDto.searchQuery} + '&page=' + ${items.number + 1}}"
+                    aria-label='Next' class="page-link">
+                    <span aria-hidden='true'>Next</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+
+</div>
+
+</html>

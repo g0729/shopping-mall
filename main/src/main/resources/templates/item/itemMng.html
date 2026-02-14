@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+
+        $(document).ready(function () {
+            // 검색 버튼 클릭 시
+            $("#searchBtn").on("click", function (e) {
+                e.preventDefault(); // submit 방지
+                page(0); // 검색 버튼을 누르면 0페이지부터 다시 조회
+            });
+        });
+
+        // 페이지 이동 함수
+        function page(page) {
+            var searchDateType = $("#searchDateType").val();
+            var searchSellStatus = $("#searchSellStatus").val();
+            var searchBy = $("#searchBy").val();
+            var searchQuery = $("#searchQuery").val();
+
+            location.href = "/admin/items" + "?" +
+                "page=" + page +
+                "&searchDateType=" + searchDateType +
+                "&searchSellStatus=" + searchSellStatus +
+                "&searchBy=" + searchBy +
+                "&searchQuery=" + searchQuery;
+        }
+
+    </script>
+</th:block>
+
+<th:block layout:fragment="css">
+    <style>
+        .manage-wrap {
+            max-width: 1200px;
+            margin: 0 auto 44px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-weight: 700;
+            color: #172033;
+        }
+
+        .filter-card {
+            border: 1px solid #dbe2ef;
+            border-radius: 14px;
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(23, 32, 51, 0.07);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .table-wrap {
+            border: 1px solid #dbe2ef;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(23, 32, 51, 0.07);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #f4f7fd;
+            font-weight: 700;
+            color: #172033;
+            border-bottom: 2px solid #dbe2ef;
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        .table tbody td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #edf1f8;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .item-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .item-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-sell {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-sold-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stock-normal {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .stock-low {
+            color: #ea580c;
+            font-weight: 600;
+        }
+
+        .stock-out {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 992px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .table-wrap {
+                overflow-x: auto;
+            }
+
+            .table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="manage-wrap">
+
+    <div class="page-header">
+        <h2>상품 관리</h2>
+        <a th:href="@{/admin/item/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>새 상품 등록
+        </a>
+    </div>
+
+    <form th:action="@{/admin/items}" role="form" method="get" th:object="${items}">
+        <div class="filter-card" th:object="${productSearchDto}">
+            <div class="filter-grid">
+                <select th:field="*{searchDateType}" id="searchDateType" class="form-select">
+                    <option value="all">전체기간</option>
+                    <option value="1d">1일</option>
+                    <option value="1w">1주</option>
+                    <option value="1m">1개월</option>
+                    <option value="6m">6개월</option>
+                </select>
+                <select th:field="*{searchSellStatus}" id="searchSellStatus" class="form-select">
+                    <option value="">판매상태(전체)</option>
+                    <option value="SELL">판매</option>
+                    <option value="SOLD_OUT">품절</option>
+                </select>
+                <select th:field="*{searchBy}" id="searchBy" class="form-select">
+                    <option value="itemNm">상품명</option>
+                    <option value="createdBy">등록자</option>
+                </select>
+                <input th:field="*{searchQuery}" id="searchQuery" type="text" class="form-control" placeholder="검색어를 입력해주세요">
+                <button id="searchBtn" type="submit" class="btn btn-primary">검색</button>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(items.getContent())}" class="empty-state">
+            <i class="bi bi-box-seam"></i>
+            <h5 class="mb-2">등록된 상품이 없습니다</h5>
+            <p class="text-muted mb-3">검색 조건을 변경하거나 새 상품을 등록해보세요</p>
+            <a th:href="@{/admin/item/new}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>상품 등록하기
+            </a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(items.getContent())}" class="table-wrap">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">상품 ID</th>
+                        <th>상품명</th>
+                        <th style="width: 100px;">상태</th>
+                        <th style="width: 120px;">등록자</th>
+                        <th style="width: 150px;">등록일</th>
+                        <th style="width: 100px;">재고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item, status: ${items.getContent()}">
+                        <td th:text="${item.id}" class="text-muted"></td>
+                        <td>
+                            <a th:href="'/admin/item/'+${item.id}" th:text="${item.name}" class="item-link"></a>
+                        </td>
+                        <td>
+                            <span th:if="${item.productSellStatus == T(com.shopping.main.domain.product.constant.ProductSellStatus).SELL}"
+                                  class="status-badge status-sell">판매중</span>
+                            <span th:unless="${item.productSellStatus == T(com.shopping.main.domain.product.constant.ProductSellStatus).SELL}"
+                                  class="status-badge status-sold-out">품절</span>
+                        </td>
+                        <td th:text="${item.createdBy}"></td>
+                        <td th:text="${item.regTime}" class="text-muted"></td>
+                        <td>
+                            <span th:classappend="${item.stockQuantity == 0} ? 'stock-out' : (${item.stockQuantity < 10} ? 'stock-low' : 'stock-normal')"
+                                  th:text="${item.stockQuantity}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(items.getContent())}"
+            th:with="start=${(items.number/maxPage)*maxPage + 1}, end=(${(items.totalPages == 0) ? 1 : (start + (maxPage - 1) < items.totalPages ? start + (maxPage - 1) : items.totalPages)})">
+            <ul class="pagination justify-content-center mt-4">
+
+                <li class="page-item" th:classappend="${items.first}?'disabled'">
+                    <a th:onclick="${items.first} ? 'return false;' : 'javascript:page(' + ${items.number - 1} + ')'"
+                       aria-label="이전 페이지"
+                       class="page-link"
+                       style="cursor: pointer;">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="d-none d-sm-inline ms-1">이전</span>
+                    </a>
+                </li>
+
+                <li class="page-item" th:each="page: ${#numbers.sequence(start, end)}"
+                    th:classappend="${items.number eq page-1}?'active':''">
+                    <a th:onclick="'javascript:page(' + ${page - 1} + ')'"
+                       th:inline="text"
+                       th:aria-label="'페이지 ' + ${page}"
+                       class="page-link"
+                       style="cursor: pointer;">[[${page}]]</a>
+                </li>
+
+                <li class="page-item" th:classappend="${items.last}?'disabled'">
+                    <a th:onclick="${items.last} ? 'return false;' : 'javascript:page(' + ${items.number + 1} + ')'"
+                       aria-label="다음 페이지"
+                       class="page-link"
+                       style="cursor: pointer;">
+                        <span class="d-none d-sm-inline me-1">다음</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+
+    </form>
+
+</div>
+
+</html>

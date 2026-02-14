@@ -1,0 +1,9 @@
+.gradle
+build
+bin
+.idea
+.vscode
+*.iml
+.DS_Store
+.git
+.claude

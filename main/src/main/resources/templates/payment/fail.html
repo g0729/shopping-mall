@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<th:block layout:fragment="css">
+    <style>
+        .fail-wrap {
+            max-width: 560px;
+            margin: 60px auto;
+            text-align: center;
+        }
+
+        .fail-card {
+            background: #fff;
+            border: 1px solid #dbe2ef;
+            border-radius: 14px;
+            padding: 48px 32px;
+            box-shadow: 0 8px 20px rgba(23, 32, 51, 0.07);
+        }
+
+        .fail-icon {
+            width: 80px;
+            height: 80px;
+            background: #fce4ec;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .fail-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: #c62828;
+        }
+
+        .fail-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .fail-message {
+            background: #fff5f5;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            padding: 16px;
+            margin: 24px 0;
+            color: #c62828;
+            font-weight: 500;
+        }
+
+        .btn-group-custom {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .btn-group-custom .btn {
+            flex: 1;
+            padding: 14px;
+            font-weight: 700;
+            border-radius: 10px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content" class="fail-wrap">
+
+    <div class="fail-card">
+        <div class="fail-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </div>
+
+        <div class="fail-title">결제에 실패했습니다</div>
+        <p class="text-muted mb-0">아래 사유를 확인 후 다시 시도해주세요.</p>
+
+        <div class="fail-message" th:if="${message != null}" th:text="${message}">
+            결제 처리 중 오류가 발생했습니다.
+        </div>
+        <div class="fail-message" th:if="${message == null}">
+            결제 처리 중 오류가 발생했습니다.
+        </div>
+
+        <div class="btn-group-custom">
+            <a th:if="${orderId != null}" th:href="@{'/payments/' + ${orderId}}" class="btn btn-primary">다시 결제하기</a>
+            <a th:if="${orderId == null}" th:href="@{/orders}" class="btn btn-primary">주문 내역 보기</a>
+            <a th:href="@{/}" class="btn btn-light border">홈으로</a>
+        </div>
+    </div>
+
+</div>
+
+</html>

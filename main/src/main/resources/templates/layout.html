@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <title th:text="${pageTitle != null ? pageTitle + ' | My Shopping Mall' : 'My Shopping Mall'}">My Shopping Mall</title>
+    <meta name="description" content="검증된 품질, 합리적인 가격의 온라인 쇼핑몰">
+
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --text-main: #172033;
+            --text-sub: #5f6b80;
+            --line: #dbe2ef;
+            --brand: #0054d1;
+            --brand-dark: #003c95;
+            --accent: #ff6a3d;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background:
+                radial-gradient(circle at 8% -10%, rgba(0, 84, 209, 0.14), transparent 34%),
+                radial-gradient(circle at 95% 0%, rgba(255, 106, 61, 0.12), transparent 28%),
+                var(--bg);
+            color: var(--text-main);
+        }
+
+        .main-nav {
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+
+        .shop-search input {
+            border-color: var(--line);
+            min-width: min(260px, 100%);
+        }
+
+        .shop-search button {
+            border-color: var(--brand);
+            color: var(--brand);
+            font-weight: 700;
+        }
+
+        .shop-search button:hover {
+            border-color: var(--brand-dark);
+            background-color: var(--brand);
+            color: #fff;
+        }
+
+        .main-content {
+            min-height: calc(100vh - 90px);
+        }
+    </style>
+
+    <th:block layout:fragment="css"></th:block>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg main-nav mb-4" aria-label="메인 네비게이션">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">My Shopping Mall</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="메뉴 열기">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+
+                <form class="d-flex me-auto shop-search" th:action="@{/}" method="get" role="search">
+                    <label for="searchQuery" class="visually-hidden">상품명 검색</label>
+                    <input id="searchQuery" name="searchQuery" class="form-control me-2" type="search"
+                        placeholder="상품명 검색" aria-label="상품명 검색">
+                    <button class="btn btn-outline-success" type="submit">검색</button>
+                </form>
+
+                <ul class="navbar-nav ms-auto">
+
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')">
+                        <a class="nav-link text-danger fw-bold" href="/admin/products/new">상품 등록</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')">
+                        <a class="nav-link text-danger fw-bold" href="/admin/products">상품 관리</a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/cart}">장바구니</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/orders}">구매 이력</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" sec:authorize="isAnonymous()" th:href="@{/users/login}">로그인</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" sec:authorize="isAnonymous()" th:href="@{/users/register}">회원가입</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <span sec:authorize="isAuthenticated()" class="nav-link text-dark">
+                            <b sec:authentication="principal.nickname"></b>님 환영합니다!
+                        </span>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" sec:authorize="isAuthenticated()" th:href="@{/users/logout}">로그아웃</a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main layout:fragment="content" class="container main-content">
+    </main>
+
+    <!-- Toast 알림 -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        <div id="liveToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="닫기"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showToast(message, type) {
+            var toast = document.getElementById('liveToast');
+            var toastBody = document.getElementById('toastMessage');
+            toast.className = 'toast align-items-center text-white bg-' + (type || 'primary') + ' border-0';
+            toastBody.textContent = message;
+            new bootstrap.Toast(toast).show();
+        }
+    </script>
+
+    <th:block layout:fragment="script"></th:block>
+</body>
+
+</html>
