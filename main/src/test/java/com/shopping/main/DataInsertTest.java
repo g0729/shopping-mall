@@ -1,8 +1,5 @@
 package com.shopping.main;
 
-import com.shopping.main.domain.product.repository.ProductImageRepository;
-import com.shopping.main.domain.product.repository.ProductRepository;
-import com.shopping.main.global.utils.TestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -10,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.shopping.main.domain.product.repository.ProductImageRepository;
+import com.shopping.main.domain.product.repository.ProductRepository;
+import com.shopping.main.global.utils.TestUtils;
 
 @Tag("performance")
 @SpringBootTest
