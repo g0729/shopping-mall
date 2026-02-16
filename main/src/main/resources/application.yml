@@ -38,3 +38,10 @@ spring:
         prefix: classpath:/templates/
         suffix: .html
         check-template-location: true
+
+springdoc:
+    paths-to-match:
+        - /payments/**
+        - /cart/**
+        - /cartItem/**
+        - /orders/**

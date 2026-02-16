@@ -31,3 +31,7 @@ logging:
         com.shopping.main: INFO
 
 uploadPath: ${UPLOAD_PATH:/home/ec2-user/shop/}
+
+springdoc:
+    api-docs:
+        enabled: false

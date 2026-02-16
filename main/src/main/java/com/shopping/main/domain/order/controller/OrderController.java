@@ -20,14 +20,18 @@ import com.shopping.main.domain.order.dto.OrderDto;
 import com.shopping.main.domain.order.dto.OrderHistDto;
 import com.shopping.main.domain.order.service.OrderService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Order", description = "주문 API")
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderServie;
 
+    @Operation(summary = "상품 주문")
     @PostMapping("/orders")
     public @ResponseBody ResponseEntity<?> order(@RequestBody @Valid OrderDto orderDto, Principal principal) {
 
@@ -58,6 +62,7 @@ public class OrderController {
         return "order/orderHist";
     }
 
+    @Operation(summary = "주문 취소")
     @PostMapping("/orders/{orderId}/cancel")
     public @ResponseBody ResponseEntity<?> cancleOrder(@PathVariable("orderId") Long orderId, Principal principal) {
 

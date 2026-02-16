@@ -20,14 +20,18 @@ import com.shopping.main.domain.cart.dto.CartItemDto;
 import com.shopping.main.domain.cart.dto.CartOrderDto;
 import com.shopping.main.domain.cart.service.CartService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Cart", description = "장바구니 API")
 @Controller
 @RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
 
+    @Operation(summary = "장바구니 상품 추가")
     @PostMapping("/cart")
     public @ResponseBody ResponseEntity<?> order(@RequestBody @Valid CartItemDto cartItemDto, Principal principal) {
 
@@ -51,6 +55,7 @@ public class CartController {
         return "cart/cartList";
     }
 
+    @Operation(summary = "장바구니 수량 수정")
     @PatchMapping("/cartItem/{cartItemId}")
     public @ResponseBody ResponseEntity<?> updateCartItem(@PathVariable(name = "cartItemId") Long cartItemId, int count,
             Principal principal) {
@@ -65,6 +70,7 @@ public class CartController {
         return new ResponseEntity<Long>(cartItemId, HttpStatus.OK);
     }
 
+    @Operation(summary = "장바구니 상품 삭제")
     @DeleteMapping("/cartItem/{cartItemId}")
     public @ResponseBody ResponseEntity<?> deleteCartItem(@PathVariable(name = "cartItemId") Long cartItemId,
             Principal principal) {
@@ -76,6 +82,7 @@ public class CartController {
         return new ResponseEntity<Long>(cartItemId, HttpStatus.OK);
     }
 
+    @Operation(summary = "장바구니 상품 주문")
     @PostMapping("/cart/orders")
     public @ResponseBody ResponseEntity<?> orderCartItem(@RequestBody CartOrderDto cartOrderDto, Principal principal) {
 

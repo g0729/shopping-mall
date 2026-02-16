@@ -36,7 +36,8 @@ public class SecurityConfig {
 
                 .requestMatchers("/admin/**").hasAuthority("ADMIN")
 
-                .requestMatchers("/", "/users/**", "/h2-console/**", "/products/**").permitAll()
+                .requestMatchers("/", "/users/**", "/h2-console/**", "/products/**",
+                        "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                 .anyRequest().authenticated())
 
