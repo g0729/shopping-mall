@@ -32,6 +32,9 @@ logging:
 
 uploadPath: ${UPLOAD_PATH:/home/ec2-user/shop/}
 
+payment:
+    gateway: toss
+
 springdoc:
     api-docs:
         enabled: false

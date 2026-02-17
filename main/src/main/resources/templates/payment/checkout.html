@@ -8,17 +8,19 @@
 </head>
 
 <th:block layout:fragment="script">
+    <script src="https://js.tosspayments.com/v2/standard"></script>
     <script th:inline="javascript">
         var orderId = [[${order.orderId}]];
         var totalPrice = [[${order.totalPrice}]];
+        var tossClientKey = [[${tossClientKey}]];
 
-        function pay() {
+        async function pay() {
             var token = $("meta[name='_csrf']").attr("content");
             var header = $("meta[name='_csrf_header']").attr("content");
 
             $("#payBtn").prop("disabled", true).text("결제 처리 중...");
 
-            // 1단계: 결제 준비
+            // 1단계: 결제 준비 (merchantUid 생성)
             $.ajax({
                 url: "/payments/ready",
                 type: "POST",
@@ -29,38 +31,27 @@
                 },
                 dataType: "json",
                 cache: false,
-                success: function (readyResult) {
-                    // 2단계: 결제 승인
-                    var merchantUid = "order_" + orderId + "_" + Date.now();
-                    var mockImpUid = "imp_mock_" + Date.now();
+                success: async function (readyResult) {
+                    try {
+                        // 2단계: 토스 결제창 호출
+                        var tossPayments = TossPayments(tossClientKey);
+                        var payment = tossPayments.payment({ customerKey: "ANONYMOUS" });
 
-                    $.ajax({
-                        url: "/payments/confirm",
-                        type: "POST",
-                        contentType: "application/json",
-                        data: JSON.stringify({
-                            orderId: orderId,
-                            impUid: mockImpUid,
-                            merchantUid: merchantUid,
-                            amount: totalPrice
-                        }),
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader(header, token);
-                        },
-                        dataType: "json",
-                        cache: false,
-                        success: function (confirmResult) {
-                            location.href = '/payments/success?orderId=' + orderId;
-                        },
-                        error: function (jqXHR) {
-                            var msg = "결제 승인에 실패했습니다.";
-                            try {
-                                var res = JSON.parse(jqXHR.responseText);
-                                if (res.message) msg = res.message;
-                            } catch (e) {}
-                            location.href = '/payments/fail?orderId=' + orderId + '&message=' + encodeURIComponent(msg);
-                        }
-                    });
+                        await payment.requestPayment({
+                            method: "CARD",
+                            amount: { currency: "KRW", value: totalPrice },
+                            orderId: readyResult.merchantUid,
+                            orderName: "주문 #" + orderId,
+                            successUrl: window.location.origin + "/payments/toss/success?shopOrderId=" + orderId,
+                            failUrl: window.location.origin + "/payments/toss/fail?shopOrderId=" + orderId
+                        });
+                    } catch (e) {
+                        // 사용자가 결제창을 닫은 경우
+                        $("#payBtn").prop("disabled", false).html(
+                            '<i class="bi bi-credit-card-2-front me-2"></i>' +
+                            new Intl.NumberFormat().format(totalPrice) + '원 결제하기'
+                        );
+                    }
                 },
                 error: function (jqXHR) {
                     var msg = "결제 준비에 실패했습니다.";
@@ -223,7 +214,7 @@
 
     <div class="payment-info">
         <i class="bi bi-info-circle-fill"></i>
-        <strong>테스트 결제 모드</strong>입니다. 실제 결제는 진행되지 않습니다.
+        <strong>토스페이먼츠 테스트 모드</strong>입니다. 실제 결제는 진행되지 않습니다.
     </div>
 
     <div class="checkout-card">

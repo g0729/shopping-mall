@@ -1,79 +1,71 @@
-// package com.shopping.main.domain.payment.gateway;
+package com.shopping.main.domain.payment.gateway;
 
-// import java.util.HashMap;
-// import java.util.Map;
+import java.util.HashMap;
+import java.util.Map;
 
-// import
-// org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-// import org.springframework.stereotype.Component;
-// import org.springframework.web.client.RestClient;
-// import org.springframework.web.client.RestClientResponseException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
-// import com.fasterxml.jackson.databind.JsonNode;
-// import
-// com.shopping.main.domain.payment.gateway.dto.PaymentVerificationResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.shopping.main.domain.payment.gateway.dto.PaymentVerificationResult;
 
-// import lombok.RequiredArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
-// @Component
-// @ConditionalOnProperty(name = "payment.gateway", havingValue = "toss")
-// @RequiredArgsConstructor
-// public class TossPaymentGateway implements PaymentGateway {
-// private final RestClient tossRestClient;
+@Component
+@ConditionalOnProperty(name = "payment.gateway", havingValue = "toss")
+@RequiredArgsConstructor
+public class TossPaymentGateway implements PaymentGateway {
+    private final RestClient tossRestClient;
 
-// @Override
-// public PaymentVerificationResult verify(String impUid, String merchanUid, int
-// amount) {
-// Map<String, Object> request = new HashMap<>();
-// request.put("paymentKey", impUid);
-// request.put("orderId", merchanUid);
-// request.put("amount", amount);
+    @Override
+    public PaymentVerificationResult verify(String paymentKey, String orderId, int amount) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("paymentKey", paymentKey);
+        request.put("orderId", orderId);
+        request.put("amount", amount);
 
-// JsonNode body = post("/v1/payments/confirm", request, "결제 승인 실패");
+        JsonNode body = post("/v1/payments/confirm", request, "결제 승인 실패");
 
-// String status = body.path("status").asText();
-// if (!"DONE".equals(status)) {
-// throw new IllegalArgumentException("토스 결제 상태가 DONE이 아닙니다. status = " +
-// status);
-// }
+        String status = body.path("status").asText();
+        if (!"DONE".equals(status)) {
+            throw new IllegalArgumentException("토스 결제 상태가 DONE이 아닙니다: " + status);
 
-// String paymentKey = body.path("paymentKey").asText();
-// String orderId = body.path("orderId").asText();
-// int totalAmount = body.path("totalAmount").asInt(-1);
+        }
 
-// if (paymentKey.isBlank() || orderId.isBlank() || totalAmount < 0) {
-// throw new IllegalArgumentException("토스 승인 응답 값이 올바르지 않습니다.");
-// }
+        return new PaymentVerificationResult(
+                body.path("paymentKey").asText(),
+                body.path("orderId").asText(),
+                body.path("totalAmount").asInt());
+    }
 
-// return new PaymentVerificationResult(paymentKey, orderId, totalAmount);
-// }
+    @Override
+    public void cancel(String paymentKey, int amount, String reason) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("cancelReason", (reason == null) || reason.isBlank() ? "고객 요청" : reason);
+        request.put("cancelAmount", amount);
 
-// @Override
-// public void cancel(String impUid, int amount, String reason) {
-// Map<String, Object> request = new HashMap<>();
-// request.put("cancelRason", (reason == null || reason.isBlank()) ?
-// "USER_REQUEST" : reason);
-// request.put("cancelAmount", amount);
+        post("/v1/payments/" + paymentKey + "/cancel", request, "결제 취소 실패");
+    }
 
-// JsonNode body = post("/v1/payments/{")
-// }
+    private JsonNode post(String uri, Object requestBody, String errorMessage) {
 
-// private JsonNode post(String uri, Object requestBody, String errorMessage,
-// Object... uriVars) {
-// try {
-// JsonNode body = tossRestClient.post()
-// .uri(uri, uriVars)
-// .body(requestBody)
-// .retrieve()
-// .body(JsonNode.class);
+        try {
+            JsonNode body = tossRestClient.post()
+                    .uri(uri)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(JsonNode.class);
 
-// if (body == null) {
-// throw new IllegalArgumentException(errorMessage + "(응답 없음)");
-// }
-// return body;
-// } catch (RestClientResponseException e) {
-// throw new IllegalArgumentException(errorMessage + " - " +
-// e.getResponseBodyAsString(), e);
-// }
-// }
-// }
+            if (body == null) {
+                throw new IllegalArgumentException(errorMessage + " 응답 없음");
+
+            }
+            return body;
+        } catch (RestClientResponseException exception) {
+            throw new IllegalArgumentException(errorMessage + " - " + exception.getResponseBodyAsString(), exception);
+        }
+    }
+}

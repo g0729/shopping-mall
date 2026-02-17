@@ -11,7 +11,7 @@ import com.shopping.main.domain.payment.gateway.dto.PaymentVerificationResult;
 public class MockPaymentGateway implements PaymentGateway {
 
     @Override
-    public PaymentVerificationResult verify(String impUid, String merchantUid) {
+    public PaymentVerificationResult verify(String impUid, String merchantUid, int amount) {
         return new PaymentVerificationResult(impUid, merchantUid, 0);
     }
 

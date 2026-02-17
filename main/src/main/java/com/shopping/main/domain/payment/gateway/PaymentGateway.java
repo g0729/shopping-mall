@@ -3,7 +3,7 @@ package com.shopping.main.domain.payment.gateway;
 import com.shopping.main.domain.payment.gateway.dto.PaymentVerificationResult;
 
 public interface PaymentGateway {
-    PaymentVerificationResult verify(String impUid, String merchantUid);
+    PaymentVerificationResult verify(String impUid, String merchantUid, int amount);
 
     void cancel(String impUid, int amount, String reason);
 }
