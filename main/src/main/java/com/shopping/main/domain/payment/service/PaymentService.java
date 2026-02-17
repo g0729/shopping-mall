@@ -41,6 +41,7 @@ public class PaymentService {
         }
 
         payment.setAmount(order.getTotalPrice());
+        payment.setMerchantUid("SHOP_" + order.getId() + "_" + System.currentTimeMillis());
         transitionTo(payment, PaymentStatus.READY);
         paymentRepository.save(payment);
 
@@ -55,7 +56,8 @@ public class PaymentService {
             throw new IllegalArgumentException("결제 금액과 주문 금액이 일치하지 않습니다");
         }
 
-        PaymentVerificationResult verified = paymentGateway.verify(dto.getImpUid(), dto.getMerchantUid());
+        PaymentVerificationResult verified = paymentGateway.verify(dto.getImpUid(), dto.getMerchantUid(),
+                order.getTotalPrice());
         if (verified.amount() > 0 && verified.amount() != order.getTotalPrice()) {
             throw new IllegalArgumentException("PG 검증 금액과 주문 금액이 일치하지 않습니다");
         }

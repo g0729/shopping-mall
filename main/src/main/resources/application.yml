@@ -39,6 +39,13 @@ spring:
         suffix: .html
         check-template-location: true
 
+payment:
+    gateway: mock
+
+toss:
+    secret-key: ${TOSS_SECRET_KEY:}
+    client-key: ${TOSS_CLIENT_KEY:}
+
 springdoc:
     paths-to-match:
         - /payments/**

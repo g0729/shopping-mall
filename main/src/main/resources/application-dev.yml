@@ -30,3 +30,6 @@ logging:
         org.springframework.web: DEBUG
 
 uploadPath: ${UPLOAD_PATH:/Users/g0729/shop/}
+
+payment:
+    gateway: toss
