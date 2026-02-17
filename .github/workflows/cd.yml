@@ -33,7 +33,7 @@ jobs:
                   username: ${{ secrets.SERVER_USERNAME }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   script: |
-                      cd /opt/ubuntu/shopping-mall/main
+                      cd /home/ubuntu/shopping-mall/main
                       git pull origin main
                       docker compose -f docker-compose.prod.yml pull app
                       docker compose -f docker-compose.prod.yml up -d
