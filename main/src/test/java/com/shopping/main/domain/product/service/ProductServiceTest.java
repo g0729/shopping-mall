@@ -187,6 +187,41 @@ public class ProductServiceTest {
                 assertThat(result.getContent()).isNotEmpty();
         }
 
+        @Test
+        @DisplayName("메인 상품 검색은 prefix 기준으로 동작한다")
+        void getMainProductList_prefixSearchOnly() throws Exception {
+                ProductFormDto appleDto = ProductFormDto.of(createProduct(
+                                "Apple Juice",
+                                5000,
+                                20,
+                                ProductSellStatus.SELL));
+                ProductFormDto pineappleDto = ProductFormDto.of(createProduct(
+                                "Pineapple",
+                                6000,
+                                20,
+                                ProductSellStatus.SELL));
+
+                MockMultipartFile appleFile = new MockMultipartFile(
+                                "file1", "apple.jpg", "image/jpeg", "apple image".getBytes());
+                MockMultipartFile pineappleFile = new MockMultipartFile(
+                                "file2", "pineapple.jpg", "image/jpeg", "pineapple image".getBytes());
+
+                productService.saveProduct(appleDto, Arrays.asList(appleFile));
+                productService.saveProduct(pineappleDto, Arrays.asList(pineappleFile));
+
+                em.flush();
+                em.clear();
+
+                ProductSearchDto searchDto = new ProductSearchDto();
+                searchDto.setSearchQuery("App");
+
+                Pageable pageable = PageRequest.of(0, 10);
+                Page<ProductSummaryDto> result = productService.getMainProductList(searchDto, pageable);
+
+                assertEquals(1, result.getContent().size());
+                assertEquals("Apple Juice", result.getContent().get(0).getItemNm());
+        }
+
         private Product createProduct(String name, int price, int stockQuantity, ProductSellStatus sellStatus) {
                 Product product = new Product();
                 product.setName(name);

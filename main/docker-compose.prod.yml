@@ -43,7 +43,6 @@ services:
 
   app:
     image: ${DOCKERHUB_USERNAME}/shopping-mall:latest
-    container_name: shopping-app
     depends_on:
       mysql:
         condition: service_healthy

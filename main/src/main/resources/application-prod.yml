@@ -10,6 +10,7 @@ spring:
         password: ${DB_PASSWORD}
 
     jpa:
+        open-in-view: false
         hibernate:
             ddl-auto: update
         show-sql: false
@@ -17,6 +18,8 @@ spring:
             hibernate:
                 format_sql: false
                 dialect: org.hibernate.dialect.MySQLDialect
+    session:
+        store-type: redis
     data:
         redis:
             host: ${SPRING_DATA_REDIS_HOST:redis}
@@ -30,7 +33,7 @@ logging:
         org.springframework.web: WARN
         com.shopping.main: INFO
 
-uploadPath: ${UPLOAD_PATH:/home/ec2-user/shop/}
+uploadPath: ${UPLOAD_PATH:/app/upload/}
 
 payment:
     gateway: toss

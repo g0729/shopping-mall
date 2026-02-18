@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
-    private final OrderService orderServie;
+    private final OrderService orderService;
 
     @Operation(summary = "상품 주문")
     @PostMapping("/orders")
@@ -42,7 +42,7 @@ public class OrderController {
 
         // 2. 주문 로직 호출
         String email = principal.getName();
-        Long orderId = orderServie.order(orderDto, email);
+        Long orderId = orderService.order(orderDto, email);
 
         // 3. 주문 성공 시
         return new ResponseEntity<Long>(orderId, HttpStatus.OK);
@@ -53,7 +53,7 @@ public class OrderController {
 
         Pageable pageable = PageRequest.of(page.isPresent() ? page.get() : 0, 4);
 
-        Page<OrderHistDto> orderHistDtoList = orderServie.getOrderList(principal.getName(), pageable);
+        Page<OrderHistDto> orderHistDtoList = orderService.getOrderList(principal.getName(), pageable);
 
         model.addAttribute("orders", orderHistDtoList);
         model.addAttribute("page", pageable.getPageNumber());
@@ -66,11 +66,11 @@ public class OrderController {
     @PostMapping("/orders/{orderId}/cancel")
     public @ResponseBody ResponseEntity<?> cancleOrder(@PathVariable("orderId") Long orderId, Principal principal) {
 
-        if (!orderServie.validateOrder(orderId, principal.getName())) {
+        if (!orderService.validateOrder(orderId, principal.getName())) {
             return new ResponseEntity<String>("취소 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
 
-        orderServie.cancelOrder(orderId);
+        orderService.cancelOrderWithPayment(orderId, principal.getName());
 
         return new ResponseEntity<Long>(orderId, HttpStatus.OK);
     }

@@ -105,8 +105,25 @@ public class PaymentService {
         getOwnedOrder(dto.getOrderId(), email);
         Payment payment = getPaymentByOrderId(dto.getOrderId());
 
+        cancelPayment(payment, true);
+        return PaymentResponseDto.of(payment);
+    }
+
+    public void cancelForOrderCancellation(Long orderId, String email) {
+        getOwnedOrder(orderId, email);
+        paymentRepository.findByOrderId(orderId).ifPresent(payment -> cancelPayment(payment, false));
+    }
+
+    private void cancelPayment(Payment payment, boolean strictMode) {
         if (payment.getStatus() == PaymentStatus.FAILED) {
-            throw new IllegalArgumentException("실패한 결제는 취소할 수 없습니다");
+            if (strictMode) {
+                throw new IllegalArgumentException("실패한 결제는 취소할 수 없습니다");
+            }
+            return;
+        }
+
+        if (payment.getStatus() == PaymentStatus.CANCEL) {
+            return;
         }
 
         if (payment.getStatus() == PaymentStatus.PAID && StringUtils.hasText(payment.getImpUid())) {
@@ -114,7 +131,6 @@ public class PaymentService {
         }
 
         transitionTo(payment, PaymentStatus.CANCEL);
-        return PaymentResponseDto.of(payment);
     }
 
     @Transactional(readOnly = true)

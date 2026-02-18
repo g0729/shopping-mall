@@ -1,5 +1,6 @@
 package com.shopping.main.domain.user.service;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -49,22 +50,27 @@ public class CustomOAuth2Service extends DefaultOAuth2UserService {
 
     @Transactional
     private SiteUser saveOrLink(OAuth2UserInfo userInfo) {
+        if (userInfo.getEmail() == null || userInfo.getEmail().isBlank()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_email"),
+                    "소셜 계정 이메일을 가져올 수 없습니다.");
+        }
         return userRepository.findByEmail(userInfo.getEmail()).map(
                 entity -> {
 
-                    // Case 1 : 이미 가입된 유저가 있다
-                    if (userInfo.getProvider() == null || "local".equals(userInfo.getProvider())) {
+                    String existingProvider = entity.getProvider();
+                    if (existingProvider == null || "local".equals(existingProvider)) {
                         return entity.linkSocial(userInfo.getProvider(), userInfo.getProviderId());
                     }
 
-                    // 다른 소셜로 가입된 경우 -> 에러 처리
-                    if (!entity.getProvider().equals(userInfo.getProvider())) {
+                    // 다른 소셜로 이미 가입된 경우 차단
+                    if (!Objects.equals(existingProvider, userInfo.getProvider())) {
                         throw new OAuth2AuthenticationException(
                                 new OAuth2Error("duplicate_provider"),
-                                "이미 " + entity.getProvider() + " 계정으로 가입되어 있습니다.");
+                                "이미 " + existingProvider + " 계정으로 가입되어 있습니다.");
                     }
                     // 같은 소셜로 재로그인
-                    return entity;
+                    return entity.linkSocial(userInfo.getProvider(), userInfo.getProviderId());
                 }).orElseGet(() -> {
                     // Case 2 : 신규가입
                     return userRepository.save(

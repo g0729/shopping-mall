@@ -23,10 +23,10 @@ public class ProductSearchDto implements Serializable {
     private String searchQuery = "";
 
     private static final long serialVersionUID = 1L;
+    private String keywordMatchMode = "prefix";
 
     @Override
     public String toString() {
-        return searchDateType + "_" + searchSellStatus + "_" + searchBy + "_" + searchQuery;
+        return searchDateType + "_" + searchSellStatus + "_" + searchBy + "_" + keywordMatchMode + "_" + searchQuery;
     }
-
 }

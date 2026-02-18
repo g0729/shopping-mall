@@ -44,3 +44,4 @@ out/
 .DS_Store
 .claude/
 main/src/main/resources/data
+docs

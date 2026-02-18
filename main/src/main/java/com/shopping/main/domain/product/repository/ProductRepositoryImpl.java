@@ -1,6 +1,7 @@
 package com.shopping.main.domain.product.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Wildcard;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.shopping.main.domain.product.constant.ProductSellStatus;
 import com.shopping.main.domain.product.dto.ProductSummaryDto;
@@ -30,35 +32,44 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         QProduct product = QProduct.product;
         QProductImage productImage = QProductImage.productImage;
 
-        // 1. 데이터 조회
-        List<ProductSummaryDto> content = queryFactory.select(
-                new QProductSummaryDto(
-                        product.id,
-                        product.name,
-                        product.description,
-                        productImage.imgUrl,
-                        product.price))
-                .from(productImage)
-                .join(productImage.product, product)
-                .where(productImage.repImgYn.eq("Y"),
-                        itemNmLike(dto.getSearchQuery()))
+        // 1) deep offset를 product 테이블에서 먼저 처리한다.
+        List<Long> pageProductIds = queryFactory
+                .select(product.id)
+                .from(product)
+                .where(productNamePrefix(dto.getSearchQuery()),
+                        hasRepImage(product))
                 .orderBy(product.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // 2. 카운트 조회 (전체 개수 세기)
-        Long total = queryFactory.select(Wildcard.count)
-                .from(productImage)
-                .join(productImage.product, product)
-                .where(productImage.repImgYn.eq("Y"),
-                        itemNmLike(dto.getSearchQuery()))
+        // 2) 현재 페이지의 상품만 대표 이미지와 조인한다.
+        List<ProductSummaryDto> content = pageProductIds.isEmpty() ? Collections.emptyList() : queryFactory
+                .select(new QProductSummaryDto(
+                        product.id,
+                        product.name,
+                        product.description,
+                        productImage.imgUrl,
+                        product.price))
+                .from(product)
+                .join(product.productImages, productImage)
+                .where(product.id.in(pageProductIds),
+                        productImage.repImgYn.eq("Y"))
+                .orderBy(product.id.desc())
+                .fetch();
+
+        // 3) 카운트도 동일 조건(product + rep image exists)으로 계산한다.
+        Long total = queryFactory
+                .select(Wildcard.count)
+                .from(product)
+                .where(productNamePrefix(dto.getSearchQuery()),
+                        hasRepImage(product))
                 .fetchOne();
 
         if (total == null)
             total = 0L;
 
-        // 3. Page 객체로 변환해서 반환
+        // 4. Page 객체로 변환해서 반환
         return new PageImpl<>(content, pageable, total);
     }
 
@@ -71,7 +82,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .selectFrom(product) // 엔티티 전체를 가져옴 (수정/삭제를 위해)
                 .where(regDtsAfter(productSearchDto.getSearchDateType()), // 날짜 조건
                         searchSellStatusEq(productSearchDto.getSearchSellStatus()), // 판매상태 조건
-                        searchByLike(productSearchDto.getSearchBy(), productSearchDto.getSearchQuery())) // 검색어 조건
+                        searchByPrefix(productSearchDto.getSearchBy(), productSearchDto.getSearchQuery())) // 검색어 조건
                 .orderBy(product.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -83,7 +94,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .from(product)
                 .where(regDtsAfter(productSearchDto.getSearchDateType()),
                         searchSellStatusEq(productSearchDto.getSearchSellStatus()),
-                        searchByLike(productSearchDto.getSearchBy(), productSearchDto.getSearchQuery()))
+                        searchByPrefix(productSearchDto.getSearchBy(), productSearchDto.getSearchQuery()))
                 .fetchOne();
 
         if (total == null)
@@ -116,26 +127,39 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return searchSellStatus == null ? null : QProduct.product.productSellStatus.eq(searchSellStatus);
     }
 
-    // ③ 검색어 조건 (상품명 or 등록자ID)
-    private BooleanExpression searchByLike(String searchBy, String searchQuery) {
+    // ③ 검색어 조건 (상품명 or 등록자ID) - 함수(LOWER) 없이 prefix LIKE 사용
+    private BooleanExpression searchByPrefix(String searchBy, String searchQuery) {
         if (!StringUtils.hasText(searchQuery)) {
             return null; // 검색어가 없으면 무시
         }
 
         if ("itemNm".equals(searchBy)) {
-            return QProduct.product.name.like("%" + searchQuery + "%");
+            return QProduct.product.name.like(prefixPattern(searchQuery));
         } else if ("createdBy".equals(searchBy)) {
-            return QProduct.product.createdBy.like("%" + searchQuery + "%");
+            return QProduct.product.createdBy.like(prefixPattern(searchQuery));
         }
 
-        return null;
+        return QProduct.product.name.like(prefixPattern(searchQuery));
     }
 
-    private BooleanExpression itemNmLike(String searchQuery) {
+    private BooleanExpression productNamePrefix(String searchQuery) {
         if (!StringUtils.hasText(searchQuery)) {
             return null;
         }
-        return QProduct.product.name.like("%" + searchQuery + "%");
+        return QProduct.product.name.like(prefixPattern(searchQuery));
+    }
+
+    private String prefixPattern(String searchQuery) {
+        return searchQuery + "%";
+    }
+
+    private BooleanExpression hasRepImage(QProduct product) {
+        QProductImage subProductImage = new QProductImage("subProductImage");
+        return JPAExpressions.selectOne()
+                .from(subProductImage)
+                .where(subProductImage.product.eq(product),
+                        subProductImage.repImgYn.eq("Y"))
+                .exists();
     }
 
 }

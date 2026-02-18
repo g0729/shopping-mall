@@ -8,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,9 +17,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "product_image", indexes = {
-        @Index(name = "idx_prodimg_product_repimg", columnList = "product_id,rep_img_yn")
-})
+@Table(name = "product_image")
 public class ProductImage extends BaseEntity {
 
     @Id

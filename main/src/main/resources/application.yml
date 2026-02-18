@@ -52,3 +52,7 @@ springdoc:
         - /cart/**
         - /cartItem/**
         - /orders/**
+
+app:
+    security:
+        remember-me-key: ${REMEMBER_ME_KEY:change-this-remember-me-key}

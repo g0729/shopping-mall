@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProductImgService {
 
-    @Value("${uploadPath}")
+    @Value("${uploadPath:${UPLOAD_PATH:/app/upload/}}")
     private String uploadPath;
 
     private final ProductImageRepository productImageRepository;

@@ -15,6 +15,7 @@ import org.thymeleaf.util.StringUtils;
 import com.shopping.main.domain.cart.dto.CartOrderDto;
 import com.shopping.main.domain.cart.entity.CartItem;
 import com.shopping.main.domain.cart.repository.CartItemRepository;
+import com.shopping.main.domain.order.constant.OrderStatus;
 import com.shopping.main.domain.order.dto.OrderDto;
 import com.shopping.main.domain.order.dto.OrderHistDto;
 import com.shopping.main.domain.order.dto.OrderItemDto;
@@ -24,6 +25,7 @@ import com.shopping.main.domain.order.repository.OrderRepository;
 import com.shopping.main.domain.payment.constant.PaymentStatus;
 import com.shopping.main.domain.payment.entity.Payment;
 import com.shopping.main.domain.payment.repository.PaymentRepository;
+import com.shopping.main.domain.payment.service.PaymentService;
 import com.shopping.main.domain.product.entity.Product;
 import com.shopping.main.domain.product.entity.ProductImage;
 import com.shopping.main.domain.product.repository.ProductImageRepository;
@@ -44,6 +46,7 @@ public class OrderService {
     private final ProductImageRepository productImageRepository;
     private final CartItemRepository cartItemRepository;
     private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
     public Long order(OrderDto orderDto, String email) {
 
@@ -68,12 +71,14 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Page<OrderHistDto> getOrderList(String email, Pageable pageable) {
+        SiteUser user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다"));
 
         // 1 . 주문 목록 조회
-        List<Order> orders = orderRepository.findOrders(email, pageable);
+        List<Order> orders = orderRepository.findOrdersByUserId(user.getId(), pageable);
 
         // 2. 전체 주문 개수 조회
-        Long totalCount = orderRepository.countOrder(email);
+        Long totalCount = orderRepository.countOrderByUserId(user.getId());
 
         if (orders.isEmpty()) {
             return new PageImpl<>(new ArrayList<>(), pageable, totalCount);
@@ -143,6 +148,17 @@ public class OrderService {
         order.cancelOrder();
     }
 
+    public void cancelOrderWithPayment(Long orderId, String email) {
+        Order order = getOwnedOrder(orderId, email);
+
+        if (order.getStatus() == OrderStatus.CANCEL) {
+            return;
+        }
+
+        paymentService.cancelForOrderCancellation(orderId, email);
+        order.cancelOrder();
+    }
+
     public Long orders(List<CartOrderDto> cartItemDtoList, String email) {
         SiteUser user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
@@ -197,5 +213,15 @@ public class OrderService {
                 .ifPresent(payment -> orderHistDto.setPaymentStatus(payment.getStatus()));
 
         return orderHistDto;
+    }
+
+    private Order getOwnedOrder(Long orderId, String email) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        if (!StringUtils.equals(email, order.getUser().getEmail())) {
+            throw new IllegalArgumentException("주문 취소 권한이 없습니다.");
+        }
+        return order;
     }
 }
