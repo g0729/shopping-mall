@@ -36,4 +36,4 @@ jobs:
                       cd /home/ubuntu/shopping-mall/main
                       git pull origin main
                       docker compose -f docker-compose.prod.yml pull app
-                      docker compose -f docker-compose.prod.yml up -d
+                      docker compose -f docker-compose.prod.yml up -d --scale app=2
