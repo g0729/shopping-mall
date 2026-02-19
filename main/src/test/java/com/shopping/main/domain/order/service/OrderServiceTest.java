@@ -1,17 +1,24 @@
 package com.shopping.main.domain.order.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shopping.main.domain.order.constant.OrderStatus;
 import com.shopping.main.domain.order.dto.OrderDto;
+import com.shopping.main.domain.order.dto.OrderHistDto;
 import com.shopping.main.domain.order.entity.Order;
 import com.shopping.main.domain.order.repository.OrderRepository;
 import com.shopping.main.domain.product.constant.ProductSellStatus;
@@ -100,6 +107,32 @@ public class OrderServiceTest {
 
         assertEquals(10, restored.getStockQuantity());
         assertEquals(OrderStatus.CANCEL, cancledOrder.getStatus());
+    }
+
+    @Test
+    @DisplayName("주문 이력 조회는 user_id 기준으로 본인 주문만 조회한다")
+    void getOrderList_returnsOnlyOwnersOrders() {
+        SiteUser otherUser = userRepository.save(
+                SiteUser.builder()
+                        .email("order-other@test.com")
+                        .nickname("other")
+                        .password("test-password")
+                        .role(UserRole.USER)
+                        .provider("local")
+                        .providerId(null)
+                        .build());
+
+        Long userOrderId1 = orderService.order(createOrderDto(product.getId(), 1), user.getEmail());
+        Long userOrderId2 = orderService.order(createOrderDto(product.getId(), 1), user.getEmail());
+        Long otherOrderId = orderService.order(createOrderDto(product.getId(), 1), otherUser.getEmail());
+
+        Page<OrderHistDto> result = orderService.getOrderList(user.getEmail(), PageRequest.of(0, 10));
+        Set<Long> orderIds = result.getContent().stream().map(OrderHistDto::getOrderId).collect(Collectors.toSet());
+
+        assertEquals(2L, result.getTotalElements());
+        assertEquals(2, result.getContent().size());
+        assertEquals(Set.of(userOrderId1, userOrderId2), orderIds);
+        assertFalse(orderIds.contains(otherOrderId));
     }
 
     private OrderDto createOrderDto(Long productId, int count) {

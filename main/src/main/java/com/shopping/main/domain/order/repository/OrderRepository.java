@@ -12,13 +12,13 @@ import com.shopping.main.domain.order.entity.Order;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
         @Query("select o from Order o " +
-                        "where o.user.email = :email " +
-                        "order by o.orderDate desc")
-        List<Order> findOrders(@Param("email") String email, Pageable pageable);
+                        "where o.user.id = :userId " +
+                        "order by o.orderDate desc, o.id desc")
+        List<Order> findOrdersByUserId(@Param("userId") Long userId, Pageable pageable);
 
         @Query("select count(o.id) from Order o " +
-                        "where o.user.email = :email ")
-        Long countOrder(@Param("email") String email);
+                        "where o.user.id = :userId ")
+        Long countOrderByUserId(@Param("userId") Long userId);
 
         // 주문 ID 목록으로 OrderItems + Product 한번에 조회
         @Query("select distinct o from Order o " +

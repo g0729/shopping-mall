@@ -37,6 +37,7 @@ dependencies {
 
     // 2. Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.session:spring-session-data-redis'
 
     // 3. Security & OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -71,6 +72,10 @@ dependencies {
 
     // 10. Dotenv (.env 파일 로드)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    // 11. AWS S3
+    implementation platform('software.amazon.awssdk:bom:2.25.0')
+    implementation 'software.amazon.awssdk:s3'
 
 }
 tasks.named('test') {
