@@ -7,13 +7,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
 // 일반 로그인(UserDetails)과 소셜 로그인(OAuth2User)을 모두 처리하는 통합 클래스
 @Getter
-public class CustomUserDetails implements UserDetails, OAuth2User {
+public class CustomUserDetails implements UserDetails, OAuth2User, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final SiteUser siteUser;
     private Map<String, Object> attributes; // 소셜 로그인 정보 담을 곳
