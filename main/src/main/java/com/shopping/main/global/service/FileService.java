@@ -5,24 +5,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Profile("!prod")
 @Slf4j
-public class FileService {
+public class FileService implements FileStorageService {
 
-    /**
-     * 파일 업로드 처리
-     * 
-     * @param uploadPath       : 파일을 저장할 실제 경로
-     * @param originalFileName : 사용자가 올린 원본 파일명 (예: image.jpg)
-     * @param fileData         : 파일의 바이트 데이터
-     * @return savedFileName : 서버에 저장된 유일한 파일명 (UUID 적용)
-     */
+    @Value("${uploadPath:${UPLOAD_PATH:/app/upload/}}")
+    private String uploadPath;
 
-    public String uploadFile(String uploadPath, String originalFilename, byte[] fileData) throws Exception {
+    @Override
+    public String uploadFile(String originalFilename, byte[] fileData) throws Exception {
         if (originalFilename == null || originalFilename.isBlank()) {
             throw new IllegalArgumentException("원본 파일명이 비어 있습니다.");
         }
@@ -45,7 +43,6 @@ public class FileService {
 
         UUID uuid = UUID.randomUUID();
         String extension = originalFilename.substring(dotIndex);
-
         String saveFileName = uuid.toString() + extension;
         File saveFile = new File(uploadDir, saveFileName);
 
@@ -56,20 +53,24 @@ public class FileService {
         return saveFileName;
     }
 
-    /**
-     * 파일 삭제 처리
-     */
-
-    public void deleteFile(String filePath) throws Exception {
-        File deleteFile = new File(filePath);
-
+    @Override
+    public void deleteFile(String fileKey) throws Exception {
+        if (fileKey == null || fileKey.isBlank()) {
+            return;
+        }
+        File deleteFile = new File(uploadPath, fileKey);
         if (deleteFile.exists()) {
             if (!deleteFile.delete()) {
-                throw new IOException("파일 삭제에 실패했습니다: " + filePath);
+                throw new IOException("파일 삭제에 실패했습니다: " + fileKey);
             }
-            log.info("{} 파일을 삭제하였습니다.", filePath);
+            log.info("{} 파일을 삭제하였습니다.", fileKey);
         } else {
-            log.info("{} 파일이 존재하지 않습니다.", filePath);
+            log.info("{} 파일이 존재하지 않습니다.", fileKey);
         }
+    }
+
+    @Override
+    public String resolveImgUrl(String imgName) {
+        return "/images/" + imgName;
     }
 }

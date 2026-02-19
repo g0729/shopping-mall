@@ -73,6 +73,10 @@ dependencies {
     // 10. Dotenv (.env 파일 로드)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
+    // 11. AWS S3
+    implementation platform('software.amazon.awssdk:bom:2.25.0')
+    implementation 'software.amazon.awssdk:s3'
+
 }
 tasks.named('test') {
     useJUnitPlatform {
