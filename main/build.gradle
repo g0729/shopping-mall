@@ -38,6 +38,7 @@ dependencies {
     // 2. Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.session:spring-session-data-redis'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.0'
 
     // 3. Security & OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-security'
