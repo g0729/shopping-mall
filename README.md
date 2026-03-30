@@ -48,7 +48,7 @@ Spring Boot 기반 쇼핑몰 백엔드 프로젝트입니다.
 
 ```bash
 # 1. 저장소 클론
-git clone https://github.com/{username}/shopping-mall.git
+git clone https://github.com/g0729/shopping-mall.git
 cd shopping-mall/main
 
 # 2. Docker로 MySQL, Redis 실행
